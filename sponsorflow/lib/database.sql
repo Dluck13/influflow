@@ -1,158 +1,227 @@
 -- SponsorFlow Database Schema
--- Run these SQL commands in the Supabase SQL Editor to set up the database
+-- Run this SQL in the Supabase SQL Editor for the Phase 2 data model.
 
--- Create profiles table (linked to Supabase Auth)
-CREATE TABLE profiles (
-  id UUID NOT NULL PRIMARY KEY,
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- User profiles linked to Supabase Auth.
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
   stripe_customer_id TEXT,
-  subscription_status TEXT DEFAULT 'inactive',
-  subscription_tier TEXT DEFAULT 'free',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  CONSTRAINT fk_auth FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+  subscription_status TEXT NOT NULL DEFAULT 'inactive'
+    CHECK (subscription_status IN ('inactive', 'active', 'past_due', 'canceled')),
+  subscription_tier TEXT NOT NULL DEFAULT 'free'
+    CHECK (subscription_tier IN ('free', 'tier_1', 'tier_2')),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Create brand_deals table
-CREATE TABLE brand_deals (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+-- Sponsorship deals owned by a single creator.
+CREATE TABLE IF NOT EXISTS public.brand_deals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   brand_name TEXT NOT NULL,
-  deal_value NUMERIC NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  payment_terms_days INTEGER DEFAULT 30,
-  status TEXT DEFAULT 'negotiating',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  deal_value NUMERIC(12, 2) NOT NULL CHECK (deal_value >= 0),
+  currency TEXT NOT NULL DEFAULT 'USD',
+  payment_terms_days INTEGER NOT NULL DEFAULT 30 CHECK (payment_terms_days > 0),
+  status TEXT NOT NULL DEFAULT 'negotiating'
+    CHECK (status IN ('negotiating', 'accepted', 'active', 'completed', 'canceled')),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Create deliverables table
-CREATE TABLE deliverables (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  deal_id UUID NOT NULL REFERENCES brand_deals(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL,
-  content_type TEXT NOT NULL,
+-- Content deliverables attached to a deal.
+CREATE TABLE IF NOT EXISTS public.deliverables (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  deal_id UUID NOT NULL REFERENCES public.brand_deals(id) ON DELETE CASCADE,
+  platform TEXT NOT NULL CHECK (platform IN ('TikTok', 'Instagram', 'YouTube', 'Other')),
+  content_type TEXT NOT NULL
+    CHECK (content_type IN ('Video', 'Story', 'Carousel', 'Dedicated Video', 'Short/Reel')),
   title TEXT,
-  due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  due_date DATE NOT NULL,
   caption_requirements TEXT,
-  is_completed BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Create invoices table
-CREATE TABLE invoices (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  deal_id UUID NOT NULL REFERENCES brand_deals(id) ON DELETE CASCADE,
-  stripe_invoice_id TEXT,
-  amount NUMERIC NOT NULL,
-  status TEXT DEFAULT 'draft',
+-- Invoices generated from deals.
+CREATE TABLE IF NOT EXISTS public.invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  deal_id UUID NOT NULL REFERENCES public.brand_deals(id) ON DELETE CASCADE,
+  stripe_invoice_id TEXT UNIQUE,
+  amount NUMERIC(12, 2) NOT NULL CHECK (amount >= 0),
+  status TEXT NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'sent', 'paid', 'failed', 'overdue', 'void')),
   sent_at TIMESTAMP WITH TIME ZONE,
   paid_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Enable Row Level Security on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE brand_deals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE deliverables ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS brand_deals_user_id_idx ON public.brand_deals(user_id);
+CREATE INDEX IF NOT EXISTS deliverables_deal_id_idx ON public.deliverables(deal_id);
+CREATE INDEX IF NOT EXISTS deliverables_due_date_idx ON public.deliverables(due_date);
+CREATE INDEX IF NOT EXISTS invoices_deal_id_idx ON public.invoices(deal_id);
+CREATE INDEX IF NOT EXISTS invoices_status_idx ON public.invoices(status);
 
--- Create RLS Policies for profiles
-CREATE POLICY "Users can only view their own profile"
-  ON profiles FOR SELECT
+DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
+CREATE TRIGGER set_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+DROP TRIGGER IF EXISTS set_brand_deals_updated_at ON public.brand_deals;
+CREATE TRIGGER set_brand_deals_updated_at
+  BEFORE UPDATE ON public.brand_deals
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+DROP TRIGGER IF EXISTS set_deliverables_updated_at ON public.deliverables;
+CREATE TRIGGER set_deliverables_updated_at
+  BEFORE UPDATE ON public.deliverables
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+DROP TRIGGER IF EXISTS set_invoices_updated_at ON public.invoices;
+CREATE TRIGGER set_invoices_updated_at
+  BEFORE UPDATE ON public.invoices
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.brand_deals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.deliverables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+CREATE POLICY "Users can view their own profile"
+  ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY "Users can only update their own profile"
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can create their own profile" ON public.profiles;
+CREATE POLICY "Users can create their own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
 
--- Create RLS Policies for brand_deals
-CREATE POLICY "Users can only view their own brand deals"
-  ON brand_deals FOR SELECT
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+CREATE POLICY "Users can update their own profile"
+  ON public.profiles FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can view their own brand deals" ON public.brand_deals;
+CREATE POLICY "Users can view their own brand deals"
+  ON public.brand_deals FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can create brand deals" ON public.brand_deals;
 CREATE POLICY "Users can create brand deals"
-  ON brand_deals FOR INSERT
+  ON public.brand_deals FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own brand deals" ON public.brand_deals;
 CREATE POLICY "Users can update their own brand deals"
-  ON brand_deals FOR UPDATE
-  USING (auth.uid() = user_id);
+  ON public.brand_deals FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own brand deals" ON public.brand_deals;
 CREATE POLICY "Users can delete their own brand deals"
-  ON brand_deals FOR DELETE
+  ON public.brand_deals FOR DELETE
   USING (auth.uid() = user_id);
 
--- Create RLS Policies for deliverables (cascaded through brand_deals)
+DROP POLICY IF EXISTS "Users can view deliverables for their deals" ON public.deliverables;
 CREATE POLICY "Users can view deliverables for their deals"
-  ON deliverables FOR SELECT
+  ON public.deliverables FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM brand_deals
+      SELECT 1 FROM public.brand_deals
       WHERE brand_deals.id = deliverables.deal_id
-      AND brand_deals.user_id = auth.uid()
+        AND brand_deals.user_id = auth.uid()
     )
   );
 
+DROP POLICY IF EXISTS "Users can create deliverables for their deals" ON public.deliverables;
 CREATE POLICY "Users can create deliverables for their deals"
-  ON deliverables FOR INSERT
+  ON public.deliverables FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM brand_deals
+      SELECT 1 FROM public.brand_deals
       WHERE brand_deals.id = deal_id
-      AND brand_deals.user_id = auth.uid()
+        AND brand_deals.user_id = auth.uid()
     )
   );
 
+DROP POLICY IF EXISTS "Users can update deliverables for their deals" ON public.deliverables;
 CREATE POLICY "Users can update deliverables for their deals"
-  ON deliverables FOR UPDATE
+  ON public.deliverables FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM brand_deals
+      SELECT 1 FROM public.brand_deals
       WHERE brand_deals.id = deliverables.deal_id
-      AND brand_deals.user_id = auth.uid()
+        AND brand_deals.user_id = auth.uid()
     )
-  );
-
-CREATE POLICY "Users can delete deliverables for their deals"
-  ON deliverables FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM brand_deals
-      WHERE brand_deals.id = deliverables.deal_id
-      AND brand_deals.user_id = auth.uid()
-    )
-  );
-
--- Create RLS Policies for invoices (cascaded through brand_deals)
-CREATE POLICY "Users can view invoices for their deals"
-  ON invoices FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM brand_deals
-      WHERE brand_deals.id = invoices.deal_id
-      AND brand_deals.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "Users can create invoices for their deals"
-  ON invoices FOR INSERT
+  )
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM brand_deals
-      WHERE brand_deals.id = deal_id
-      AND brand_deals.user_id = auth.uid()
+      SELECT 1 FROM public.brand_deals
+      WHERE brand_deals.id = deliverables.deal_id
+        AND brand_deals.user_id = auth.uid()
     )
   );
 
-CREATE POLICY "Users can update invoices for their deals"
-  ON invoices FOR UPDATE
+DROP POLICY IF EXISTS "Users can delete deliverables for their deals" ON public.deliverables;
+CREATE POLICY "Users can delete deliverables for their deals"
+  ON public.deliverables FOR DELETE
   USING (
     EXISTS (
-      SELECT 1 FROM brand_deals
+      SELECT 1 FROM public.brand_deals
+      WHERE brand_deals.id = deliverables.deal_id
+        AND brand_deals.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can view invoices for their deals" ON public.invoices;
+CREATE POLICY "Users can view invoices for their deals"
+  ON public.invoices FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.brand_deals
       WHERE brand_deals.id = invoices.deal_id
-      AND brand_deals.user_id = auth.uid()
+        AND brand_deals.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can create invoices for their deals" ON public.invoices;
+CREATE POLICY "Users can create invoices for their deals"
+  ON public.invoices FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.brand_deals
+      WHERE brand_deals.id = deal_id
+        AND brand_deals.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can update invoices for their deals" ON public.invoices;
+CREATE POLICY "Users can update invoices for their deals"
+  ON public.invoices FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.brand_deals
+      WHERE brand_deals.id = invoices.deal_id
+        AND brand_deals.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.brand_deals
+      WHERE brand_deals.id = invoices.deal_id
+        AND brand_deals.user_id = auth.uid()
     )
   );

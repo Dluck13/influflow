@@ -1,8 +1,7 @@
 /**
- * Rate calculation utility for the SponsorFlow rate calculator
+ * Rate calculation utility for the SponsorFlow rate calculator.
+ * Uses market CPM tiers from $20-$40 per 1,000 average views.
  */
-
-const BASE_CPM = 25; // $25 per 1,000 views
 
 const NICHE_MULTIPLIERS: Record<string, number> = {
   Beauty: 1.4,
@@ -15,13 +14,44 @@ const NICHE_MULTIPLIERS: Record<string, number> = {
   Other: 1.0,
 };
 
+const PLATFORM_MULTIPLIERS: Record<string, number> = {
+  TikTok: 1.0,
+  Instagram: 1.1,
+  YouTube: 1.25,
+};
+
+const CPM_TIERS = [
+  {
+    label: "Emerging",
+    maxViews: 25000,
+    cpm: 20,
+  },
+  {
+    label: "Growth",
+    maxViews: 100000,
+    cpm: 25,
+  },
+  {
+    label: "Established",
+    maxViews: 500000,
+    cpm: 32,
+  },
+  {
+    label: "Premium",
+    maxViews: Number.POSITIVE_INFINITY,
+    cpm: 40,
+  },
+];
+
 export interface RateCalculationResult {
   minPrice: number;
   maxPrice: number;
   baseCPM: number;
   nicheMultiplier: number;
+  platformMultiplier: number;
   adjustedCPM: number;
   engagementRate: number;
+  tierLabel: string;
 }
 
 /**
@@ -29,27 +59,26 @@ export interface RateCalculationResult {
  */
 export function calculateRate(
   averageViews: number,
-  niche: string
+  niche: string,
+  platform = "TikTok"
 ): RateCalculationResult {
-  // Get niche multiplier (default to 1.0 if not found)
   const nicheMultiplier = NICHE_MULTIPLIERS[niche] || 1.0;
+  const platformMultiplier = PLATFORM_MULTIPLIERS[platform] || 1.0;
+  const tier = CPM_TIERS.find((item) => averageViews <= item.maxViews) || CPM_TIERS[0];
 
-  // Calculate adjusted CPM
-  const adjustedCPM = BASE_CPM * nicheMultiplier;
-
-  // Calculate minimum price: (views / 1000) * adjustedCPM
+  const adjustedCPM = tier.cpm * nicheMultiplier * platformMultiplier;
   const minPrice = (averageViews / 1000) * adjustedCPM;
-
-  // Calculate maximum price: min * 1.4 (40% premium)
   const maxPrice = minPrice * 1.4;
 
   return {
     minPrice,
     maxPrice,
-    baseCPM: BASE_CPM,
+    baseCPM: tier.cpm,
     nicheMultiplier,
+    platformMultiplier,
     adjustedCPM,
-    engagementRate: 0, // Can be calculated if follower data is provided
+    engagementRate: 0,
+    tierLabel: tier.label,
   };
 }
 

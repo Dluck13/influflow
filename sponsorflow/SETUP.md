@@ -1,8 +1,8 @@
 # SponsorFlow - Setup Instructions
 
-## Phase 1 Complete ✅
+## Phase 2 In Progress
 
-The foundation and authentication system is ready to go. Follow these steps to get the project running.
+The foundation, authentication system, protected dashboard route, rate calculator, and database migration are ready to review.
 
 ### 1. Environment Setup
 
@@ -75,21 +75,37 @@ sponsorflow/
 │   ├── supabase.ts                  # Supabase client
 │   ├── schemas.ts                   # Zod validation schemas
 │   └── database.sql                 # Schema migration
-├── middleware.ts                    # Auth protection
+├── proxy.ts                         # Auth protection
 └── public/                          # Static assets
 ```
 
 ---
 
-## Next Phase (Phase 2)
+## Current Phase (Phase 2)
 
-Ready to build the Rate Calculator and dashboard features? Let me know!
+The core Phase 2 surfaces are now implemented. Use the checkpoints below for commit-sized review.
 
 ### Phase 2 Todos:
-- [ ] Rate Calculator UI component
-- [ ] CPM formula logic
-- [ ] Database integration
-- [ ] Dashboard stats/overview
+- [x] Secure dashboard route protected by Next.js proxy
+- [x] Rate Calculator UI with metric ranges
+- [x] CPM formula logic using $20-$40 market tiers
+- [x] Core database migration for profiles, brand_deals, deliverables, and invoices
+- [x] Dashboard stats overview wired to Supabase tables
+- [ ] Apply the latest `lib/database.sql` in Supabase and smoke test authenticated reads
+
+### Commit Checkpoints
+
+1. `phase2: implement cpm tier rate calculator`
+   - `lib/calculator.ts`
+   - `app/(dashboard)/calculator/page.tsx`
+
+2. `phase2: harden supabase deal schema`
+   - `lib/database.sql`
+   - `DATABASE_MIGRATION.md`
+
+3. `chore: align phase docs and lint target`
+   - `SETUP.md`
+   - `package.json`
 
 ---
 
@@ -119,4 +135,4 @@ Check that email confirmation is enabled in Supabase Authentication settings.
 ---
 
 **Last Updated**: 2026-05-29
-**Phase Status**: Phase 1 Complete ✅ | Phase 2 Ready to Start
+**Phase Status**: Phase 1 Complete | Phase 2 Implementation Ready for Supabase Smoke Test

@@ -126,17 +126,17 @@ export default function DashboardPage() {
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           Getting Started
         </h2>
-        <ul className="space-y-3">
-          <li className="flex items-start">
-            <span className="text-indigo-600 mr-3">✓</span>
+        <ul className="space-y-3 text-sm text-gray-800">
+          <li className="flex items-start gap-3">
+            <span className="mt-0.5 font-bold text-indigo-600">✓</span>
             <span>Check out the Rate Calculator to estimate your pricing</span>
           </li>
-          <li className="flex items-start">
-            <span className="text-indigo-600 mr-3">✓</span>
+          <li className="flex items-start gap-3">
+            <span className="mt-0.5 font-bold text-indigo-600">✓</span>
             <span>Upload brand contracts to automatically extract deliverables</span>
           </li>
-          <li className="flex items-start">
-            <span className="text-indigo-600 mr-3">✓</span>
+          <li className="flex items-start gap-3">
+            <span className="mt-0.5 font-bold text-indigo-600">✓</span>
             <span>Generate and send professional invoices with one click</span>
           </li>
         </ul>

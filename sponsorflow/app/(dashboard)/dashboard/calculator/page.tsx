@@ -12,15 +12,13 @@ export default function CalculatorPage() {
   const [platform, setPlatform] = useState<string>('TikTok');
   const [niche, setNiche] = useState<string>('Tech');
 
-  // Calculate rates in real-time
   const calculation = useMemo(() => {
     if (averageViews > 0) {
-      return calculateRate(averageViews, niche);
+      return calculateRate(averageViews, niche, platform);
     }
     return null;
-  }, [averageViews, niche]);
+  }, [averageViews, niche, platform]);
 
-  // Calculate engagement rate
   const engagementRate = useMemo(() => {
     if (followerCount > 0 && averageViews > 0) {
       return calculateEngagementRate(averageViews, followerCount);
@@ -28,7 +26,6 @@ export default function CalculatorPage() {
     return 0;
   }, [followerCount, averageViews]);
 
-  // Sample calculations for reference
   const samples = [
     {
       title: 'Micro Influencer',
@@ -58,7 +55,7 @@ export default function CalculatorPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Rate Calculator</h1>
         <p className="mt-2 text-gray-600">
-          Estimate your pricing based on your audience size and engagement
+          Estimate sponsored-post pricing from market CPM tiers, performance, and category premiums.
         </p>
       </div>
 
@@ -68,61 +65,74 @@ export default function CalculatorPage() {
           <div className="bg-white rounded-lg shadow p-6 space-y-6">
             <h2 className="text-xl font-semibold text-gray-900">Your Metrics</h2>
 
-            {/* Follower Count */}
             <div>
-              <label htmlFor="followers" className="block text-sm font-medium text-gray-700 mb-2">
-                Follower Count
-                <span className="text-gray-500 text-xs ml-2">
-                  Total followers on {platform}
-                </span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  id="followers"
-                  value={followerCount}
-                  onChange={(e) => setFollowerCount(Math.max(0, parseInt(e.target.value) || 0))}
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter follower count"
-                />
-                <span className="absolute right-4 top-2 text-gray-500 text-sm">
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <label htmlFor="followers" className="block text-sm font-medium text-gray-700">
+                  Follower Count
+                </label>
+                <span className="text-sm font-semibold text-gray-900">
                   {followerCount.toLocaleString()}
                 </span>
               </div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
+                <input
+                  type="range"
+                  id="followers"
+                  value={followerCount}
+                  onChange={(e) => setFollowerCount(Number(e.target.value))}
+                  min="1000"
+                  max="1000000"
+                  step="1000"
+                  className="w-full accent-indigo-600"
+                />
+                <input
+                  type="number"
+                  aria-label="Follower count"
+                  value={followerCount}
+                  onChange={(e) => setFollowerCount(Math.max(0, parseInt(e.target.value) || 0))}
+                  min="0"
+                  className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
               <p className="mt-1 text-xs text-gray-500">
-                Used to calculate engagement rate
+                Used to calculate engagement rate on {platform}.
               </p>
             </div>
 
-            {/* Average Views Per Post */}
             <div>
-              <label htmlFor="views" className="block text-sm font-medium text-gray-700 mb-2">
-                Average Views Per Post
-                <span className="text-gray-500 text-xs ml-2">
-                  Typical performance metric
-                </span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  id="views"
-                  value={averageViews}
-                  onChange={(e) => setAverageViews(Math.max(0, parseInt(e.target.value) || 0))}
-                  min="0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Enter average views"
-                />
-                <span className="absolute right-4 top-2 text-gray-500 text-sm">
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <label htmlFor="views" className="block text-sm font-medium text-gray-700">
+                  Average Views Per Post
+                </label>
+                <span className="text-sm font-semibold text-gray-900">
                   {averageViews.toLocaleString()}
                 </span>
               </div>
+              <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
+                <input
+                  type="range"
+                  id="views"
+                  value={averageViews}
+                  onChange={(e) => setAverageViews(Number(e.target.value))}
+                  min="1000"
+                  max="2000000"
+                  step="1000"
+                  className="w-full accent-indigo-600"
+                />
+                <input
+                  type="number"
+                  aria-label="Average views per post"
+                  value={averageViews}
+                  onChange={(e) => setAverageViews(Math.max(0, parseInt(e.target.value) || 0))}
+                  min="0"
+                  className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
               <p className="mt-1 text-xs text-gray-500">
-                This is your primary pricing driver
+                This selects the CPM tier: $20, $25, $32, or $40 per 1,000 views.
               </p>
             </div>
 
-            {/* Platform Selector */}
             <div>
               <label htmlFor="platform" className="block text-sm font-medium text-gray-700 mb-2">
                 Platform
@@ -140,11 +150,10 @@ export default function CalculatorPage() {
                 ))}
               </select>
               <p className="mt-1 text-xs text-gray-500">
-                Platform affects audience reach and typical engagement
+                Platform adjusts the baseline for short-form, image-led, and long-form content.
               </p>
             </div>
 
-            {/* Niche Selector */}
             <div>
               <label htmlFor="niche" className="block text-sm font-medium text-gray-700 mb-2">
                 Niche / Industry
@@ -166,10 +175,9 @@ export default function CalculatorPage() {
               </p>
             </div>
 
-            {/* Info Box */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <span className="font-semibold">💡 Tip:</span> Your engagement rate is{' '}
+                <span className="font-semibold">Signal:</span> Your engagement rate is{' '}
                 <span className="font-semibold">{engagementRate.toFixed(2)}%</span>
                 {engagementRate >= 3
                   ? ' - excellent engagement for brand deals!'
@@ -188,7 +196,6 @@ export default function CalculatorPage() {
 
             {calculation && averageViews > 0 ? (
               <div className="space-y-6">
-                {/* Price Range */}
                 <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-200">
                   <p className="text-xs text-gray-600 uppercase tracking-wide mb-2">Estimated Rate</p>
                   <div className="flex items-baseline gap-2">
@@ -205,11 +212,17 @@ export default function CalculatorPage() {
                   </p>
                 </div>
 
-                {/* Breakdown */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-gray-900">Calculation Breakdown</h3>
 
                   <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Market Tier:</span>
+                      <span className="font-medium text-gray-900">
+                        {calculation.tierLabel}
+                      </span>
+                    </div>
+
                     <div className="flex justify-between">
                       <span className="text-gray-600">Average Views:</span>
                       <span className="font-medium text-gray-900">
@@ -220,7 +233,7 @@ export default function CalculatorPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Base CPM:</span>
                       <span className="font-medium text-gray-900">
-                        ${calculation.baseCPM.toFixed(2)}
+                        ${calculation.baseCPM.toFixed(0)}
                       </span>
                     </div>
 
@@ -228,6 +241,13 @@ export default function CalculatorPage() {
                       <span className="text-gray-600">Niche ({niche}):</span>
                       <span className="font-medium text-indigo-600">
                         ×{calculation.nicheMultiplier.toFixed(1)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Platform ({platform}):</span>
+                      <span className="font-medium text-indigo-600">
+                        x{calculation.platformMultiplier.toFixed(2)}
                       </span>
                     </div>
 
@@ -245,7 +265,6 @@ export default function CalculatorPage() {
                   </div>
                 </div>
 
-                {/* Engagement Info */}
                 <div className="bg-gray-50 rounded p-3">
                   <p className="text-xs font-semibold text-gray-700 mb-2">Engagement Metrics</p>
                   <div className="space-y-1 text-xs text-gray-600">
@@ -274,7 +293,7 @@ export default function CalculatorPage() {
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Sample Calculations</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {samples.map((sample) => {
-            const sampleCalc = calculateRate(sample.views, sample.niche);
+            const sampleCalc = calculateRate(sample.views, sample.niche, platform);
             return (
               <div
                 key={sample.title}
@@ -315,15 +334,14 @@ export default function CalculatorPage() {
         </div>
       </div>
 
-      {/* Tips Section */}
       <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-green-900 mb-4">💡 Pricing Tips</h3>
+        <h3 className="text-lg font-semibold text-green-900 mb-4">Pricing Tips</h3>
         <ul className="space-y-2 text-sm text-green-800">
-          <li>• <span className="font-medium">Engagement Rate:</span> Aim for 3%+ to command premium rates</li>
-          <li>• <span className="font-medium">Niche Impact:</span> Beauty and Tech creators earn up to 40% more</li>
-          <li>• <span className="font-medium">Quality Buffer:</span> The max range (+40%) applies to established creators with strong engagement</li>
-          <li>• <span className="font-medium">Negotiation:</span> Use this calculator as your baseline, but always negotiate based on brand budget and scope</li>
-          <li>• <span className="font-medium">Platform Matters:</span> YouTube typically pays more than TikTok due to different audience sizes</li>
+          <li><span className="font-medium">Engagement Rate:</span> Aim for 3%+ to command premium rates.</li>
+          <li><span className="font-medium">Niche Impact:</span> Beauty and Tech creators earn up to 40% more.</li>
+          <li><span className="font-medium">Quality Buffer:</span> The max range (+40%) applies to established creators with strong engagement.</li>
+          <li><span className="font-medium">Negotiation:</span> Use this calculator as your baseline, then adjust for scope, usage rights, and exclusivity.</li>
+          <li><span className="font-medium">Platform Matters:</span> Long-form YouTube placements carry a higher multiplier than short-form posts.</li>
         </ul>
       </div>
     </div>

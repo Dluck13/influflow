@@ -1,7 +1,7 @@
 # SponsorFlow Phase 2 - Database Migration Guide
 
 ## Overview
-This guide explains how to set up the SponsorFlow database schema using the Supabase SQL Editor. The migration creates four main tables and implements Row Level Security (RLS) policies to ensure data privacy.
+This guide explains how to set up the SponsorFlow database schema using the Supabase SQL Editor. The migration creates four main tables, indexes, timestamp triggers, constraints, and Row Level Security (RLS) policies to ensure data privacy.
 
 ---
 
@@ -50,8 +50,8 @@ Links to Supabase Auth users. Stores user account information:
 - `id` (UUID) - Primary key, linked to auth.users
 - `email` (TEXT) - User email address
 - `stripe_customer_id` (TEXT) - Stripe payment integration
-- `subscription_status` (TEXT) - Subscription state (inactive/active)
-- `subscription_tier` (TEXT) - Plan tier (free/starter/pro/enterprise)
+- `subscription_status` (TEXT) - Subscription state (inactive/active/past_due/canceled)
+- `subscription_tier` (TEXT) - Plan tier (free/tier_1/tier_2)
 - `created_at`, `updated_at` - Timestamps
 
 #### 2. **brand_deals** (Sponsorship Deals)
@@ -62,20 +62,25 @@ Stores sponsorship deals created by users:
 - `deal_value` (NUMERIC) - Deal amount
 - `currency` (TEXT) - Currency code (default: USD)
 - `payment_terms_days` (INTEGER) - Payment terms (default: 30 days)
-- `status` (TEXT) - Deal status (negotiating/accepted/completed/cancelled)
+- `status` (TEXT) - Deal status (negotiating/accepted/active/completed/canceled)
 - `created_at`, `updated_at` - Timestamps
 
 #### 3. **deliverables** (Deal Deliverables)
 Tracks content deliverables for each deal:
 - `id` (UUID) - Primary key
 - `deal_id` (UUID) - Foreign key to brand_deals
-- `platform` (TEXT) - Social platform (Instagram/TikTok/YouTube/Twitter/etc.)
-- `content_type` (TEXT) - Content format (Post/Reel/Story/Video/etc.)
+- `platform` (TEXT) - Social platform (TikTok/Instagram/YouTube/Other)
+- `content_type` (TEXT) - Content format matching the contract parser schema
 - `title` (TEXT) - Deliverable title
 - `due_date` (TIMESTAMP) - Delivery deadline
 - `caption_requirements` (TEXT) - Content guidelines/captions
 - `is_completed` (BOOLEAN) - Completion status
 - `created_at`, `updated_at` - Timestamps
+
+### Additional Database Objects
+- `pgcrypto` extension for `gen_random_uuid()`
+- `set_updated_at()` trigger function
+- Indexes for deal ownership, deliverable deadlines, invoice ownership, and invoice status
 
 #### 4. **invoices** (Payment Invoices)
 Manages invoicing and payment tracking:
@@ -103,6 +108,7 @@ All tables have RLS enabled to ensure users can only access their own data.
 
 #### profiles
 - ✅ SELECT: Users can view their own profile
+- ✅ INSERT: Users can create their own profile
 - ✅ UPDATE: Users can update their own profile
 - ❌ DELETE: No policy (users inherit from auth system)
 
@@ -122,7 +128,7 @@ All tables have RLS enabled to ensure users can only access their own data.
 - ✅ SELECT: Users can view invoices for their deals
 - ✅ INSERT: Users can create invoices for their deals
 - ✅ UPDATE: Users can update invoices for their deals
-- ⚠️ DELETE: Users can delete invoices for their deals (may want to restrict)
+- ❌ DELETE: No client delete policy by default
 
 ---
 
