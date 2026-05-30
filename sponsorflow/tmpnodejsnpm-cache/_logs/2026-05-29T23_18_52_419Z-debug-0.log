@@ -1,0 +1,43 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\15405\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.4.2
+2 info using node@v22.16.0
+3 silly config load:file:C:\Users\15405\AppData\Roaming\npm\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\15405\IntelliJ\influflow\sponsorflow\.npmrc
+5 silly config load:file:C:\Users\15405\.npmrc
+6 silly config load:file:C:\Users\15405\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm exec shadcn-ui@latest init --yes --defaults
+8 verbose argv "exec" "--" "shadcn-ui@latest" "init" "--yes" "--defaults"
+9 verbose logfile logs-max:10 dir:C:\Users\15405\IntelliJ\influflow\sponsorflow\tmpnodejsnpm-cache\_logs\2026-05-29T23_18_52_419Z-
+10 verbose logfile C:\Users\15405\IntelliJ\influflow\sponsorflow\tmpnodejsnpm-cache\_logs\2026-05-29T23_18_52_419Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 http fetch GET 200 https://registry.npmjs.org/shadcn-ui 351ms (cache miss)
+14 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+15 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+16 silly idealTree buildDeps
+17 silly fetch manifest shadcn-ui@0.9.5
+18 silly packumentCache full:https://registry.npmjs.org/shadcn-ui cache-miss
+19 http fetch GET 200 https://registry.npmjs.org/shadcn-ui 71ms (cache miss)
+20 silly packumentCache full:https://registry.npmjs.org/shadcn-ui set size:undefined disposed:false
+21 silly placeDep ROOT shadcn-ui@0.9.5 OK for:  want: 0.9.5
+22 silly fetch manifest chalk@^5.4.1
+23 silly packumentCache full:https://registry.npmjs.org/chalk cache-miss
+24 http cache https://registry.npmjs.org/chalk 23ms (cache hit)
+25 silly packumentCache full:https://registry.npmjs.org/chalk set size:117861 disposed:false
+26 silly placeDep ROOT chalk@5.6.2 OK for: shadcn-ui@0.9.5 want: ^5.4.1
+27 silly reify moves {}
+28 silly audit bulk request { 'shadcn-ui': [ '0.9.5' ], chalk: [ '5.6.2' ] }
+29 http cache chalk@https://registry.npmjs.org/chalk/-/chalk-5.6.2.tgz 0ms (cache hit)
+30 http cache shadcn-ui@https://registry.npmjs.org/shadcn-ui/-/shadcn-ui-0.9.5.tgz 0ms (cache hit)
+31 silly tarball no local data for chalk@https://registry.npmjs.org/chalk/-/chalk-5.6.2.tgz. Extracting by manifest.
+32 silly tarball no local data for shadcn-ui@https://registry.npmjs.org/shadcn-ui/-/shadcn-ui-0.9.5.tgz. Extracting by manifest.
+33 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 99ms
+34 silly audit report {}
+35 http fetch GET 200 https://registry.npmjs.org/shadcn-ui/-/shadcn-ui-0.9.5.tgz 148ms (cache miss)
+36 http fetch GET 200 https://registry.npmjs.org/chalk/-/chalk-5.6.2.tgz 182ms (cache miss)
+37 verbose cwd C:\Users\15405\IntelliJ\influflow\sponsorflow
+38 verbose os Windows_NT 10.0.26200
+39 verbose node v22.16.0
+40 verbose npm  v11.4.2
+41 verbose exit 0
+42 info ok

@@ -1,0 +1,41 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\15405\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.4.2
+2 info using node@v22.16.0
+3 silly config load:file:C:\Users\15405\AppData\Roaming\npm\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\15405\IntelliJ\influflow\.npmrc
+5 silly config load:file:C:\Users\15405\.npmrc
+6 silly config load:file:C:\Users\15405\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm exec create-next-app@latest sponsorflow --typescript --tailwind --eslint --no-git --app --no-src-dir --skip-install
+8 verbose argv "exec" "--" "create-next-app@latest" "sponsorflow" "--typescript" "--tailwind" "--eslint" "--no-git" "--app" "--no-src-dir" "--skip-install"
+9 verbose logfile logs-max:10 dir:C:\Users\15405\IntelliJ\influflow\tmpnodejsnpm-cache\_logs\2026-05-29T23_14_15_916Z-
+10 verbose logfile C:\Users\15405\IntelliJ\influflow\tmpnodejsnpm-cache\_logs\2026-05-29T23_14_15_916Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+13 http fetch GET 200 https://registry.npmjs.org/npm 332ms
+14 http fetch GET 200 https://registry.npmjs.org/create-next-app 346ms (cache miss)
+15 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+16 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+17 silly idealTree buildDeps
+18 silly fetch manifest create-next-app@16.2.6
+19 silly packumentCache full:https://registry.npmjs.org/create-next-app cache-miss
+20 http fetch GET 200 https://registry.npmjs.org/create-next-app 265ms (cache miss)
+21 silly packumentCache full:https://registry.npmjs.org/create-next-app set size:undefined disposed:false
+22 silly placeDep ROOT create-next-app@16.2.6 OK for:  want: 16.2.6
+23 silly reify moves {}
+24 silly audit bulk request { 'create-next-app': [ '16.2.6' ] }
+25 http cache create-next-app@https://registry.npmjs.org/create-next-app/-/create-next-app-16.2.6.tgz 1ms (cache hit)
+26 silly tarball no local data for create-next-app@https://registry.npmjs.org/create-next-app/-/create-next-app-16.2.6.tgz. Extracting by manifest.
+27 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 117ms
+28 silly audit report {}
+29 http fetch GET 200 https://registry.npmjs.org/create-next-app/-/create-next-app-16.2.6.tgz 1986ms (cache miss)
+30 verbose cwd C:\Users\15405\IntelliJ\influflow
+31 verbose os Windows_NT 10.0.26200
+32 verbose node v22.16.0
+33 verbose npm  v11.4.2
+34 notice
+34 notice New [33mminor[39m version of npm available! [33m11.4.2[39m -> [34m11.16.0[39m
+34 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.16.0[39m
+34 notice To update run: [4mnpm install -g npm@11.16.0[24m
+34 notice  { force: true, [Symbol(proc-log.meta)]: true }
+35 verbose exit 0
+36 info ok
