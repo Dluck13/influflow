@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { ensureUserProfile } from '@/lib/profiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -33,6 +34,9 @@ export default function LoginPage() {
 
       if (error) {
         setError(error.message);
+      } else if (data.user && data.session) {
+        await ensureUserProfile(supabase, data.user);
+        router.push('/dashboard');
       } else {
         setMessage(
           'Check your email to confirm your account!'
@@ -52,7 +56,7 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -60,6 +64,9 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
+        if (data.user) {
+          await ensureUserProfile(supabase, data.user);
+        }
         router.push('/dashboard');
       }
     } catch {

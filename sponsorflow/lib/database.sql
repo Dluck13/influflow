@@ -11,6 +11,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email)
+  VALUES (NEW.id, COALESCE(NEW.email, NEW.id::TEXT || '@auth.local'))
+  ON CONFLICT (id) DO UPDATE
+    SET email = EXCLUDED.email,
+        updated_at = NOW();
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- User profiles linked to Supabase Auth.
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -77,6 +93,18 @@ DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
 CREATE TRIGGER set_profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
+
+INSERT INTO public.profiles (id, email)
+SELECT id, COALESCE(email, id::TEXT || '@auth.local')
+FROM auth.users
+ON CONFLICT (id) DO UPDATE
+  SET email = EXCLUDED.email,
+      updated_at = NOW();
 
 DROP TRIGGER IF EXISTS set_brand_deals_updated_at ON public.brand_deals;
 CREATE TRIGGER set_brand_deals_updated_at

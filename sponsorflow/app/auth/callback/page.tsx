@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { ensureUserProfile } from '@/lib/profiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +21,15 @@ function AuthCallbackContent() {
       }
 
       const supabase = createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-      router.push(error ? '/login' : '/dashboard');
+      if (error || !data.user) {
+        router.push('/login');
+        return;
+      }
+
+      await ensureUserProfile(supabase, data.user);
+      router.push('/dashboard');
     };
 
     handleCallback();

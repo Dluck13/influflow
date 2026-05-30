@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
+import { ensureUserProfile } from '@/lib/profiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,17 +17,20 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await ensureUserProfile(supabase, user);
+      }
       setUser(user);
       setLoading(false);
     };
 
     getUser();
-  }, [supabase.auth]);
+  }, [supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
